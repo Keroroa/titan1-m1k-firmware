@@ -1,0 +1,29 @@
+MIT License
+
+Copyright (c) 2026 Titan-1 Mouse project contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+USB 栈血统说明:本固件的 usb.c 源自 PJRC Teensy usb_mouse(MIT,© 2009 PJRC),
+经 Furiosus/qsxcv 与 Zaunkönig M1K(MIT,© 2023 Zaunkoenig GmbH)两次演绎,
+本项目在其基础上适配 ATmega32U4 + 双接口,同样以 MIT 发布。
+srom_3360_0x05.h 为 PixArt PMW3360 传感器固件数据,源自 M1K 仓库,
+著作权归 PixArt 所有,按 QMK/M1K 社区惯例随附用于互操作。

@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Titan1 配置器</title>
+<style>
+  /* ============ Linear 风格设计令牌 ============ */
+  :root {
+    color-scheme: dark;
+    --bg: #08090a;
+    --surface-1: #0f1011; --surface-2: #151617; --surface-3: #1c1d1f;
+    --border: rgba(255,255,255,.06); --border-strong: rgba(255,255,255,.11);
+    --text: #f7f8f8; --text-2: rgba(235,236,237,.62); --text-3: rgba(235,236,237,.38);
+    --accent: #5e6ad2; --accent-hover: #717ee3; --accent-glow: rgba(94,106,210,.35);
+    --green: #4cb782; --red: #eb5757; --amber: #f2994a;
+    --r-card: 14px; --r-ctl: 8px;
+    --font: "Inter", -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body { margin: 0; font-family: var(--font); color: var(--text); font-size: 14px;
+         line-height: 1.55; -webkit-font-smoothing: antialiased;
+         background:
+           radial-gradient(900px 340px at 50% -140px, rgba(94,106,210,.16), transparent 70%),
+           var(--bg); }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px 64px; }
+
+  /* ============ 顶栏 ============ */
+  header { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(14px);
+           background: rgba(8,9,10,.75); border-bottom: 1px solid var(--border); }
+  .bar { max-width: 880px; margin: 0 auto; padding: 12px 20px;
+         display: flex; align-items: center; gap: 12px; }
+  .brand { font-weight: 700; letter-spacing: -.01em; font-size: 15px; }
+  .bar .grow { flex: 1; }
+
+  .chip { display: inline-flex; align-items: center; gap: 6px;
+          background: var(--surface-2); border: 1px solid var(--border);
+          border-radius: 99px; padding: 3px 11px; font-size: 12px; color: var(--text-2); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-3); }
+  .chip.ok { color: var(--green); border-color: rgba(76,183,130,.3); }
+  .chip.ok .dot { background: var(--green); box-shadow: 0 0 8px rgba(76,183,130,.7);
+                  animation: pulse 2s infinite; }
+  .chip.bad { color: var(--red); } .chip.bad .dot { background: var(--red); }
+  @keyframes pulse { 50% { opacity: .5; } }
+
+  /* ============ 控件 ============ */
+  button { font: inherit; font-weight: 600; color: #fff; border: 0; cursor: pointer;
+           background: var(--accent); border-radius: var(--r-ctl);
+           padding: 8px 16px; transition: background .15s, transform .1s, box-shadow .15s;
+           box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 1px 3px rgba(0,0,0,.3); }
+  button:hover { background: var(--accent-hover); }
+  button:active { transform: translateY(1px); }
+  button:disabled { background: var(--surface-3); color: var(--text-3); cursor: default;
+                    box-shadow: none; }
+  button.ghost { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+  button.ghost:hover { background: var(--surface-3); }
+  button.warn { background: #b3433c; } button.warn:hover { background: #c9504a; }
+  button.small { padding: 5px 12px; font-size: 12.5px; }
+  :focus-visible { outline: 2px solid var(--accent-hover); outline-offset: 2px; }
+
+  input[type=number] { font: inherit; color: var(--text); background: var(--surface-1);
+           border: 1px solid var(--border-strong); border-radius: var(--r-ctl);
+           padding: 7px 10px; width: 7.2rem; font-variant-numeric: tabular-nums; }
+  input[type=number]:focus { border-color: var(--accent); outline: none;
+           box-shadow: 0 0 0 3px rgba(94,106,210,.2); }
+  input[type=range] { width: 100%; accent-color: var(--accent); margin: 10px 0 2px; }
+
+  /* iOS 开关 */
+  .switch { position: relative; display: inline-block; width: 36px; height: 21px; flex: none; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .knob { position: absolute; inset: 0; background: var(--surface-3);
+          border: 1px solid var(--border-strong); border-radius: 99px; transition: .18s; }
+  .knob::before { content: ""; position: absolute; width: 15px; height: 15px; border-radius: 50%;
+          background: #c9ccd1; top: 2px; left: 2px; transition: .18s; }
+  .switch input:checked + .knob { background: var(--accent); border-color: transparent;
+          box-shadow: 0 0 10px var(--accent-glow); }
+  .switch input:checked + .knob::before { transform: translateX(15px); background: #fff; }
+  .switch input:focus-visible + .knob { outline: 2px solid var(--accent-hover); outline-offset: 2px; }
+
+  /* ============ 卡片与区块 ============ */
+  .card { background: linear-gradient(180deg, rgba(255,255,255,.025), transparent), var(--surface-1);
+          border: 1px solid var(--border); border-radius: var(--r-card);
+          padding: 20px 22px; margin-top: 18px;
+          box-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 8px 24px rgba(0,0,0,.25); }
+  h2 { font-size: 13px; margin: 0 0 14px; color: var(--text-2); font-weight: 600;
+       text-transform: uppercase; letter-spacing: .08em; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+  .grow { flex: 1; }
+  .hint { color: var(--text-3); font-size: 12px; margin: 10px 0 0; }
+
+  /* DPI 档位卡 */
+  .stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 14px; }
+  .stage { background: var(--surface-2); border: 1px solid var(--border);
+           border-radius: 12px; padding: 14px 16px; transition: border-color .2s, box-shadow .2s, transform .1s;
+           cursor: pointer; }
+  .stage:hover { border-color: var(--border-strong); }
+  .stage:active { transform: scale(.985); }
+  .stage:focus-visible { outline: 2px solid var(--accent-hover); outline-offset: 2px; }
+  .stage.active-stage { border-color: rgba(94,106,210,.65);
+           box-shadow: 0 0 0 1px rgba(94,106,210,.55), 0 0 22px rgba(94,106,210,.18); }
+  .stage .top { display: flex; align-items: center; justify-content: space-between; }
+  .stage .name { color: var(--text-2); font-size: 12.5px; font-weight: 600; }
+  .stage .badge { font-size: 10.5px; color: #a8b2f0; background: rgba(94,106,210,.14);
+           border: 1px solid rgba(94,106,210,.35); padding: 1px 8px; border-radius: 99px;
+           display: none; }
+  .stage.active-stage .badge { display: inline-block; }
+  .stepper { display: flex; align-items: center; gap: 6px; margin: 8px 0 2px; }
+  .stepper button { width: 30px; height: 32px; padding: 0; font-size: 16px; font-weight: 500;
+           background: var(--surface-3); }
+  .stepper input[type=number] { text-align: center; width: 6.4rem; }
+  .dpiunit { color: var(--text-3); font-size: 12px; }
+
+  /* 设置行 */
+  .setline { display: flex; align-items: center; gap: 12px; padding: 11px 2px;
+             border-bottom: 1px solid var(--border); }
+  .setline:last-child { border-bottom: 0; }
+  .setline .t { font-weight: 600; }
+  .setline .d { color: var(--text-3); font-size: 12px; }
+
+  /* 统计瓦片 */
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .stat { background: var(--surface-2); border: 1px solid var(--border);
+          border-radius: 12px; padding: 12px 14px; }
+  .stat .v { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums;
+             letter-spacing: -.02em; }
+  .stat .k { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+  #scope { background: #0a0b0d; border: 1px solid var(--border); border-radius: 12px;
+           width: 100%; height: 150px; display: block; margin-top: 12px; }
+
+  .mono { font-family: "JetBrains Mono", Consolas, monospace; }
+  #log { background: #0a0b0d; border: 1px solid var(--border); border-radius: 10px;
+         padding: 10px 12px; height: 160px; overflow-y: auto; font-size: 12px; color: #7dc98f; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 4px; }
+
+  .dialog-back { position: fixed; inset: 0; background: rgba(0,0,0,.6);
+                 backdrop-filter: blur(4px); display: none;
+                 align-items: center; justify-content: center; z-index: 50; }
+  .dialog-back.show { display: flex; }
+  .dialog { background: var(--surface-2); border: 1px solid var(--border-strong);
+            border-radius: 16px; padding: 22px 24px; max-width: 26rem; width: 92%;
+            box-shadow: 0 24px 80px rgba(0,0,0,.6); }
+  .flexbtns { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+  #debug { color: var(--text-2); font-size: 13px; }
+  #debug b { color: var(--text); }
+  #hexdump { background: #0a0b0d; border-radius: 10px; padding: 8px 12px; font-size: 12px;
+             color: #8b96a5; white-space: pre; overflow-x: auto; margin-top: 10px; }
+  .connect-note { color: var(--text-3); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <div class="brand">Titan1 配置器</div>
+  <span class="chip" id="status"><span class="dot"></span>未连接</span>
+  <span class="chip" id="fwchip" style="display:none"></span>
+  <div class="grow"></div>
+  <button id="connect" class="small">连接鼠标</button>
+  <button id="forget" class="ghost small" disabled>忘记设备</button>
+</div></header>
+
+<div class="wrap">
+
+<div class="card">
+  <div class="row">
+    <div class="grow">
+      <h2 style="margin-bottom:4px">设备</h2>
+      <div class="connect-note">WebHID 直连,免驱动(Chrome / Edge)。授权一次后,插上鼠标自动连接;实时数据走配置接口的遥测流,不占用系统鼠标。</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>DPI 三档 · 100 – 12000(步进 100)</h2>
+  <div class="stages">
+    <div class="stage" id="stage0">
+      <div class="top"><span class="name">档位 1</span><span class="badge">使用中</span></div>
+      <div class="stepper">
+        <button class="ghost" data-step="0,-100" tabindex="-1">−</button>
+        <input type="number" id="dpi0" min="100" max="12000" step="100" value="400">
+        <button class="ghost" data-step="0,100" tabindex="-1">+</button>
+        <span class="dpiunit">DPI</span>
+      </div>
+      <input type="range" id="s0r" min="100" max="12000" step="100" value="400">
+    </div>
+    <div class="stage" id="stage1">
+      <div class="top"><span class="name">档位 2 · 默认</span><span class="badge">使用中</span></div>
+      <div class="stepper">
+        <button class="ghost" data-step="1,-100" tabindex="-1">−</button>
+        <input type="number" id="dpi1" min="100" max="12000" step="100" value="800">
+        <button class="ghost" data-step="1,100" tabindex="-1">+</button>
+        <span class="dpiunit">DPI</span>
+      </div>
+      <input type="range" id="s1r" min="100" max="12000" step="100" value="800">
+    </div>
+    <div class="stage" id="stage2">
+      <div class="top"><span class="name">档位 3</span><span class="badge">使用中</span></div>
+      <div class="stepper">
+        <button class="ghost" data-step="2,-100" tabindex="-1">−</button>
+        <input type="number" id="dpi2" min="100" max="12000" step="100" value="1600">
+        <button class="ghost" data-step="2,100" tabindex="-1">+</button>
+        <span class="dpiunit">DPI</span>
+      </div>
+      <input type="range" id="s2r" min="100" max="12000" step="100" value="1600">
+    </div>
+  </div>
+  <div style="display:none">
+    <input type="radio" name="active" value="0">
+    <input type="radio" name="active" value="1" checked>
+    <input type="radio" name="active" value="2">
+  </div>
+  <div class="flexbtns" style="margin-top:12px">
+    <span class="hint" style="margin:0">点击档位卡片即可切换当前档</span>
+    <span class="grow"></span>
+    <button id="factory" class="ghost small">恢复出厂</button>
+  </div>
+  <p class="hint">改动自动应用并写 EEPROM;鼠标第 6 键循环切档,本页实时跟随。</p>
+</div>
+
+<div class="card">
+  <h2>传感器</h2>
+  <div class="setline">
+    <label class="switch"><input type="checkbox" id="lod3"><span class="knob"></span></label>
+    <div class="grow"><div class="t">抬离高度 3mm</div>
+      <div class="d">关闭 = 2mm(原厂默认,低 LOD 更稳)</div></div>
+  </div>
+  <div class="setline">
+    <label class="switch"><input type="checkbox" id="anglesnap"><span class="knob"></span></label>
+    <div class="grow"><div class="t">角度捕捉</div>
+      <div class="d">直线修正,游戏建议关闭</div></div>
+  </div>
+  <div class="setline">
+    <label class="switch"><input type="checkbox" id="wheelinv"><span class="knob"></span></label>
+    <div class="grow"><div class="t">滚轮方向反转</div>
+      <div class="d">按手感切换</div></div>
+  </div>
+  <div class="flexbtns" style="margin-top:12px">
+    <button id="refresh" class="ghost small">从鼠标重新读取</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2>实时监视 · 1kHz</h2>
+  <div class="grid2">
+    <div class="stat"><div class="v" id="mHz">—</div><div class="k">当前回报率 Hz</div></div>
+    <div class="stat"><div class="v" id="mAvg">—</div><div class="k">平均 Hz</div></div>
+    <div class="stat"><div class="v" id="mJit">—</div><div class="k">抖动 µs(min/max)</div></div>
+    <div class="stat"><div class="v" id="mCnt">0</div><div class="k">累计报告</div></div>
+  </div>
+  <canvas id="scope" width="800" height="150"></canvas>
+  <div class="flexbtns" style="margin-top:12px">
+    <button id="calbtn" class="ghost small">DPI 实测校准</button>
+    <span class="hint grow" id="calstat" style="margin:0"></span>
+  </div>
+</div>
+
+<div class="card">
+  <h2>传感器寄存器</h2>
+  <div class="mono" id="debug">—</div>
+  <div class="setline" style="margin-top:8px">
+    <label class="switch"><input type="checkbox" id="dbgw"><span class="knob"></span></label>
+    <div class="grow"><div class="t">自动刷新(500ms)</div>
+      <div class="d">读寄存器会短暂占用固件循环,游戏时别开</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>工具</h2>
+  <div class="flexbtns">
+    <button id="export" class="ghost small">导出配置</button>
+    <button id="import" class="ghost small">导入配置</button>
+    <span class="grow"></span>
+    <button id="bootloader" class="warn small">进入刷机模式 (DFU)</button>
+    <input type="file" id="importfile" accept=".json" style="display:none">
+  </div>
+  <div id="hexdump" style="display:none"></div>
+</div>
+
+<div class="card">
+  <h2>日志</h2>
+  <div id="log" class="mono"></div>
+</div>
+
+</div>
+
+<div class="dialog-back" id="calback">
+  <div class="dialog">
+    <h2 style="margin-bottom:8px">DPI 实测校准</h2>
+    <p class="connect-note">把鼠标放在尺子/鼠标垫刻度起点,<b style="color:var(--text)">沿直线水平</b>
+      移动一段距离后输入厘米数,页面累计传感器计数换算真实 DPI。</p>
+    <label style="color:var(--text-2);font-size:12.5px;margin-top:10px;display:block">移动距离(厘米)</label>
+    <input type="number" id="calcm" value="10" step="0.5" min="1">
+    <div class="flexbtns" style="margin-top:14px">
+      <button id="calgo">开始累计</button>
+      <button id="calend" class="ghost" disabled>结束并计算</button>
+      <span class="grow"></span>
+      <button id="calclose" class="ghost small">关闭</button>
+    </div>
+    <p class="hint" id="calresult"></p>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ================= 协议层(与固件 raw HID 保持一致) ================= */
+const CMD_GET_INFO   = 0x10;
+const CMD_GET_CFG    = 0x11;
+const CMD_SET_CFG    = 0x12;
+const CMD_GET_DEBUG  = 0x13;
+const CMD_BOOTLOADER = 0x14;
+const DEFAULTS = { dpi: [400, 800, 1600], active: 1, lod: 0, snap: 0, wheelinv: 0 };
+
+const $ = id => document.getElementById(id);
+let rawDev = null, demoMode = false;
+
+function log(msg, cls = '') {
+  const line = document.createElement('div');
+  if (cls) line.style.color = cls === 'ok' ? 'var(--green)' : cls === 'bad' ? 'var(--red)' : 'var(--amber)';
+  line.textContent = new Date().toLocaleTimeString() + '  ' + msg;
+  $('log').prepend(line);
+  while ($('log').children.length > 300) $('log').lastChild.remove();
+}
+
+/* rpc:命令→应答,串行队列防串包;演示模式下走模拟器 */
+let demoReply = null;
+let rpcChain = Promise.resolve();
+function rpc(cmd, payload) {
+  const run = rpcChain.then(() => rpcOnce(cmd, payload));
+  rpcChain = run.catch(() => {});
+  return run;
+}
+function rpcOnce(cmd, payload) {
+  if (demoMode) return Promise.resolve(demoReply(cmd, payload));
+  if (!rawDev) return Promise.reject(new Error('未连接'));
+  const out = new Uint8Array(32);
+  out[0] = cmd;
+  if (payload) for (let i = 0; i < payload.length; i++) out[2 + i] = payload[i];
+  return new Promise((resolve, reject) => {
+    const h = ev => {
+      const a = new Uint8Array(ev.data.buffer ?? ev.data);
+      if (a[0] === 0x20) return;           /* 遥测包,不是本命令的应答 */
+      clearTimeout(to);
+      rawDev.removeEventListener('inputreport', h);
+      resolve(a);
+    };
+    const to = setTimeout(() => {
+      rawDev.removeEventListener('inputreport', h);
+      reject(new Error('应答超时'));
+    }, 1500);
+    rawDev.addEventListener('inputreport', h);
+    rawDev.sendReport(0, out).catch(e => {
+      clearTimeout(to); rawDev.removeEventListener('inputreport', h); reject(e);
+    });
+  });
+}
+
+/* ================= 配置编解码 ================= */
+function parseCfg(d) {
+  return {
+    dpi: [0, 1, 2].map(i => d[2 + i * 2] | (d[3 + i * 2] << 8)),
+    active: d[8], lod: d[9], snap: d[10], wheelinv: d[11],
+  };
+}
+function buildPayload(c) {
+  const p = new Uint8Array(10);
+  for (let i = 0; i < 3; i++) {
+    const v = Math.round(Math.min(12000, Math.max(100, c.dpi[i])) / 100) * 100;
+    p[i * 2] = v & 0xFF; p[1 + i * 2] = v >> 8;
+  }
+  p[6] = c.active; p[7] = c.lod ? 1 : 0; p[8] = c.snap ? 1 : 0; p[9] = c.wheelinv ? 1 : 0;
+  return p;
+}
+function formCfg() {
+  return {
+    dpi: [0, 1, 2].map(i => parseInt($('dpi' + i).value) || 800),
+    active: parseInt(document.querySelector('input[name=active]:checked').value),
+    lod: $('lod3').checked ? 1 : 0, snap: $('anglesnap').checked ? 1 : 0,
+    wheelinv: $('wheelinv').checked ? 1 : 0,
+  };
+}
+function fillForm(c) {
+  for (let i = 0; i < 3; i++) {
+    $('dpi' + i).value = c.dpi[i]; $('s' + i + 'r').value = c.dpi[i];
+  }
+  document.querySelector(`input[name=active][value="${c.active}"]`).checked = true;
+  markStages(c.active);
+  $('lod3').checked = !!c.lod; $('anglesnap').checked = !!c.snap; $('wheelinv').checked = !!c.wheelinv;
+}
+function markStages(a) {
+  [0, 1, 2].forEach(i => $('stage' + i).classList.toggle('active-stage', i === a));
+}
+
+/* 应用(写→回读校验) */
+let applyTimer = null;
+async function applyCfg(reason) {
+  try {
+    const want = formCfg();
+    const echo = parseCfg(await rpc(CMD_SET_CFG, buildPayload(want)));
+    const back = parseCfg(await rpc(CMD_GET_CFG));
+    fillForm(back);
+    const diffs = [];
+    if (echo.dpi.some((v, i) => v !== want.dpi[i])) diffs.push('DPI 被吸附');
+    if (JSON.stringify(back) !== JSON.stringify(echo)) diffs.push('回读不一致!');
+    log(`已应用(${reason})` + (diffs.length ? ' ⚠ ' + diffs.join(', ') : ' ✓ 回读校验一致'),
+        diffs.length ? 'bad' : 'ok');
+  } catch (e) { log('应用失败: ' + e.message, 'bad'); }
+}
+function applySoon(reason) {
+  clearTimeout(applyTimer);
+  applyTimer = setTimeout(() => applyCfg(reason), 350);
+}
+
+/* ================= 连接管理(自动重连) ================= */
+function setStatus(txt, cls) {
+  $('status').innerHTML = '<span class="dot"></span>' + txt;
+  $('status').className = 'chip ' + (cls || '');
+}
+function setConnectedUI(on) {
+  ['refresh', 'factory', 'export', 'import', 'bootloader'].forEach(id => $(id).disabled = !on);
+  $('forget').disabled = !on;
+}
+
+async function tryAutoConnect() {
+  if (demoMode) return;
+  try {
+    const list = await navigator.hid.getDevices();
+    const raw = list.find(d => (d.collections || []).some(c => c.usagePage === 0xFF60));
+    if (!raw) return;
+    await openBoth(raw);
+    log('自动连接: ' + raw.productName, 'ok');
+  } catch (e) { /* 静默,等手动 */ }
+}
+
+async function openBoth(raw) {
+  rawDev = raw;
+  if (!raw.opened) await raw.open();
+  rawDev.addEventListener('inputreport', onTelemetry);
+  await handshake();
+  await setTelemetry(true);
+  log('遥测流已开启(经配置接口,浏览器不给网页鼠标接口,这样绕开)', 'ok');
+}
+
+/* 遥测流:固件每帧发一份 tag=0x20 包,监视/示波器/校准全走这里 */
+const CMD_TELEMETRY = 0x15;
+async function setTelemetry(on) {
+  try { await rpc(CMD_TELEMETRY, [on ? 1 : 0]); } catch (e) {}
+}
+function onTelemetry(ev) {
+  const d = new Uint8Array(ev.data.buffer ?? ev.data);
+  if (d[0] !== 0x20) return;
+  monitorLive = true;
+  const ts = ev.timeStamp;
+  if (lastTs) {
+    ivBuf.push(ts - lastTs);
+    if (ivBuf.length > 250) ivBuf.shift();
+  }
+  lastTs = ts;
+  reportCount++;
+  const dx = (d[4] | (d[5] << 8)) << 16 >> 16, dy = (d[6] | (d[7] << 8)) << 16 >> 16;
+  dxBuf.push([dx, dy]);
+  while (dxBuf.length > 2000) dxBuf.shift();
+  if (calActive) { calX += Math.abs(dx); calY += Math.abs(dy); }
+}
+/* 页面隐藏时停流省电,回来续上 */
+document.addEventListener('visibilitychange', () => {
+  if (!rawDev && !demoMode) return;
+  setTelemetry(!document.hidden);
+});
+
+async function handshake() {
+  const r = await rpc(CMD_GET_INFO);
+  if (r[1] !== 0 || r[2] !== 0x42 || r[3] !== 0x4D) throw new Error('应答异常(不是 bstmouse 固件?)');
+  $('fwchip').style.display = '';
+  $('fwchip').textContent = `固件 v${r[4]} · 协议 v${r[5]}`;
+  setStatus(rawDev ? '已连接' : '演示模式', 'ok');
+  setConnectedUI(true);
+  const c = parseCfg(await rpc(CMD_GET_CFG));
+  fillForm(c);
+  lastActive = c.active;
+  log(`连接成功,固件 v${r[4]},当前档位 ${r[6] + 1},配置已读取`, 'ok');
+}
+
+$('connect').onclick = async () => {
+  try {
+    const devices = await navigator.hid.requestDevice({
+      filters: [{ vendorId: 0x16C0, productId: 0x047E }]
+    });
+    const raw = (devices || []).find(d => (d.collections || []).some(c => c.usagePage === 0xFF60))
+             || rawDev
+             || (await navigator.hid.getDevices()).find(d => (d.collections || []).some(c => c.usagePage === 0xFF60));
+    if (!raw) { log('没找到配置接口(vendor-defined)', 'bad'); return; }
+    await openBoth(raw);
+  } catch (e) { log('连接失败: ' + e.message, 'bad'); }
+};
+$('forget').onclick = async () => {
+  for (const d of await navigator.hid.getDevices()) await d.forget().catch(() => {});
+  location.reload();
+};
+
+navigator.hid.addEventListener('connect', () => { if (!rawDev && !demoMode) tryAutoConnect(); });
+navigator.hid.addEventListener('disconnect', e => {
+  if (e.device === rawDev) {
+    rawDev = null; monitorLive = false;
+    setStatus('已断开', 'bad'); setConnectedUI(false);
+    log('设备已断开,插回后自动重连', 'warn');
+  }
+});
+
+/* ================= 实时监视:回报率 + 轨迹示波器(数据源=遥测流) ================= */
+let monitorLive = false;
+let ivBuf = [], dxBuf = [], lastTs = 0, reportCount = 0;
+let calActive = false, calX = 0, calY = 0;
+let lastActive = -1;
+
+function hz() {
+  const n = ivBuf.length;
+  if (!n) return null;
+  const avg = ivBuf.reduce((a, b) => a + b, 0) / n;
+  return { cur: ivBuf[n - 1], avg, min: Math.min(...ivBuf), max: Math.max(...ivBuf) };
+}
+setInterval(() => {
+  const s = hz();
+  if (monitorLive && s) {
+    $('mHz').textContent = Math.round(1000 / s.cur);
+    $('mAvg').textContent = Math.round(1000 / s.avg);
+    $('mJit').textContent = `${Math.round(s.min * 1000)} / ${Math.round(s.max * 1000)}`;
+    $('mCnt').textContent = reportCount;
+  }
+}, 500);
+
+const ctx = $('scope').getContext('2d');
+(function drawScope() {
+  requestAnimationFrame(drawScope);
+  const W = 800, H = 150;
+  ctx.fillStyle = '#0a0b0d'; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.beginPath();
+  ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+  if (dxBuf.length < 2) return;
+  const peak = Math.max(50, ...dxBuf.map(p => Math.abs(p[0])), ...dxBuf.map(p => Math.abs(p[1])));
+  const xs = dxBuf.length;
+  for (const [color, idx] of [['#4cb782', 0], ['#67d8ff', 1]]) {
+    ctx.strokeStyle = color; ctx.lineWidth = 1.4; ctx.beginPath();
+    dxBuf.forEach((p, i) => {
+      const x = i / (xs - 1) * W, y = H / 2 - (p[idx] / peak) * (H / 2 - 10);
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    });
+    ctx.stroke();
+  }
+})();
+
+/* DPI 档位实时跟随(D5 键切档,GET_INFO 轮询) */
+setInterval(async () => {
+  if (!rawDev && !demoMode) return;
+  if (document.hidden) return;
+  try {
+    const r = await rpc(CMD_GET_INFO);
+    if (r[1] === 0 && r[6] !== lastActive) {
+      lastActive = r[6];
+      document.querySelector(`input[name=active][value="${r[6]}"]`).checked = true;
+      markStages(r[6]);
+      log(`检测到档位切换 → ${r[6] + 1}(鼠标 DPI 键)`, 'ok');
+    }
+  } catch (e) { /* 忙碌时静默 */ }
+}, 800);
+
+/* ================= 控件绑定(改动即应用) ================= */
+[0, 1, 2].forEach(i => {
+  $('s' + i + 'r').oninput = () => { $('dpi' + i).value = $('s' + i + 'r').value; applySoon('滑条'); };
+  $('dpi' + i).onchange = () => { $('s' + i + 'r').value = $('dpi' + i).value; applySoon('输入'); };
+});
+document.querySelectorAll('button[data-step]').forEach(b => {
+  b.onclick = () => {
+    const [i, d] = b.dataset.step.split(',').map(Number);
+    const el = $('dpi' + i);
+    el.value = Math.min(12000, Math.max(100, (parseInt(el.value) || 800) + d));
+    $('s' + i + 'r').value = el.value;
+    applySoon('步进');
+  };
+});
+/* 点档位卡片直接切档(单选钮隐藏,仅作状态存储) */
+[0, 1, 2].forEach(i => {
+  const card = $('stage' + i);
+  card.setAttribute('role', 'button');
+  card.setAttribute('tabindex', '0');
+  const pick = () => {
+    const r = document.querySelector(`input[name=active][value="${i}"]`);
+    if (r.checked) return;
+    r.checked = true;
+    markStages(i);
+    applyCfg('点选档位');
+  };
+  card.addEventListener('click', ev => {
+    if (ev.target.closest('input, button')) return;   /* 调值控件不触发切档 */
+    pick();
+  });
+  card.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); pick(); }
+  });
+});
+['lod3', 'anglesnap', 'wheelinv'].forEach(id =>
+  $(id).onchange = () => applyCfg('开关'));
+
+$('refresh').onclick = async () => {
+  try { fillForm(parseCfg(await rpc(CMD_GET_CFG))); log('配置已读取', 'ok'); }
+  catch (e) { log('失败: ' + e.message, 'bad'); }
+};
+$('factory').onclick = async () => {
+  if (!confirm('恢复出厂设置(400/800/1600,激活档 2,LOD 2mm,捕捉关,滚轮反转关)?')) return;
+  fillForm(structuredClone(DEFAULTS));
+  await applyCfg('恢复出厂');
+};
+
+/* ================= 寄存器调试 ================= */
+async function readDebug() {
+  const r = await rpc(CMD_GET_DEBUG);
+  if (r[1] !== 0) throw new Error('读取失败');
+  const names = ['Product_ID', 'SROM_ID', 'Config1', 'Motion', 'Lift_Cfg', 'Angle_Snap'];
+  $('debug').innerHTML = names.map((n, i) => {
+    const v = r[2 + i];
+    return `${n}=<b>0x${v.toString(16).padStart(2, '0')}</b>`;
+  }).join(' &nbsp;·&nbsp; ') + ` &nbsp;·&nbsp; 当前CPI=${((r[4] + 1) * 100)}`;
+}
+setInterval(() => { if ($('dbgw').checked && (rawDev || demoMode)) readDebug().catch(() => {}); }, 500);
+
+/* ================= 工具 ================= */
+$('export').onclick = () => {
+  const blob = new Blob([JSON.stringify(formCfg(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'bstmouse-config.json'; a.click();
+  log('配置已导出', 'ok');
+};
+$('import').onclick = () => $('importfile').click();
+$('importfile').onchange = async ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  try {
+    const c = JSON.parse(await f.text());
+    if (!Array.isArray(c.dpi) || c.dpi.length !== 3) throw new Error('格式不对');
+    fillForm(c); await applyCfg('导入');
+  } catch (e) { log('导入失败: ' + e.message, 'bad'); }
+};
+$('bootloader').onclick = async () => {
+  if (!confirm('鼠标将重启进入 DFU 刷机模式,USB 会断开。继续?')) return;
+  try { await rpc(CMD_BOOTLOADER); } catch (e) {}
+  log('已发送,鼠标正在进入 DFU…', 'ok');
+};
+
+/* ================= DPI 校准 ================= */
+$('calbtn').onclick = () => $('calback').classList.add('show');
+$('calclose').onclick = () => { $('calback').classList.remove('show'); calActive = false; };
+$('calgo').onclick = () => {
+  calX = calY = 0; calActive = true;
+  $('calgo').disabled = true; $('calend').disabled = false;
+  $('calresult').textContent = '累计中…水平直线移动鼠标,完成后点「结束并计算」';
+};
+$('calend').onclick = () => {
+  calActive = false;
+  $('calgo').disabled = false; $('calend').disabled = true;
+  const cm = parseFloat($('calcm').value) || 10;
+  const inch = cm / 2.54;
+  $('calresult').innerHTML =
+    `X 计数 ${calX} → 实际 DPI = <b style="color:var(--text)">${Math.round(calX / inch)}</b>` +
+    (calY ? ` &nbsp;|&nbsp; Y 计数 ${calY} → ${Math.round(calY / inch)}` : '') +
+    ` &nbsp;(设定 ${$('dpi' + document.querySelector('input[name=active]:checked').value).value})`;
+};
+
+/* ================= 演示模式 ================= */
+if (new URLSearchParams(location.search).has('demo')) {
+  demoMode = true;
+  let state = structuredClone(DEFAULTS);
+  demoReply = (cmd, p) => {
+    const r = new Uint8Array(32); r[0] = cmd;
+    if (cmd === CMD_GET_INFO) { r[2] = 0x42; r[3] = 0x4D; r[4] = 2; r[5] = 1; r[6] = state.active; }
+    else if (cmd === CMD_TELEMETRY) { r[2] = 1; }
+    else if (cmd === CMD_GET_CFG || cmd === CMD_SET_CFG) {
+      if (cmd === CMD_SET_CFG && p) state = parseCfg([0, 0, ...p]);
+      const e = buildPayload(state);
+      for (let i = 0; i < 10; i++) r[2 + i] = e[i];
+    } else if (cmd === CMD_GET_DEBUG) {
+      [0x42, 0x05, Math.round(state.dpi[state.active] / 100) - 1, 0x80, state.lod ? 3 : 2, state.snap ? 0x80 : 0]
+        .forEach((v, i) => r[2 + i] = v);
+    }
+    return r;
+  };
+  /* 模拟 1kHz 遥测流 */
+  let t = 0;
+  setInterval(() => {
+    if (Math.random() < 0.4) return;
+    t += 0.05;
+    const d = new Uint8Array(32);
+    d[0] = 0x20;
+    const dx = Math.round(Math.sin(t) * 25 + (Math.random() - .5) * 3);
+    const dy = Math.round(Math.cos(t * 1.3) * 18);
+    d[4] = dx & 0xFF; d[5] = dx >> 8; d[6] = dy & 0xFF; d[7] = dy >> 8;
+    d[9] = 1;
+    onTelemetry({ timeStamp: performance.now(), data: d.buffer });
+  }, 1);
+  handshake().catch(e => log('演示初始化失败: ' + e.message, 'bad'));
+  log('演示模式运行中(?demo,无硬件可体验全部 UI)', 'warn');
+} else {
+  tryAutoConnect();
+}
+</script>
+</body>
+</html>

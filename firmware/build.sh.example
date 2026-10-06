@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# WSL 内编译流水线示例:把 Windows 侧(或 /mnt 下)的源码拷进 Linux 文件系统编译,hex 拷回。
+# 跨 /mnt 直接 make 会慢 ~10 倍,且大小写/权限偶发问题,建议走本流程。
+# 用法: wsl -- bash /mnt/c/你的路径/titan1-mouse/firmware/build.sh.example
+set -e
+SRC="$(cd "$(dirname "$0")" && pwd)"     # firmware/ 目录
+BUILD=~/titan1-fw-build
+mkdir -p "$BUILD"
+cp "$SRC"/*.c "$SRC"/*.h "$SRC"/Makefile "$BUILD"/
+cd "$BUILD"
+make
+cp bstmouse2.hex "$SRC"/
+echo "=== hex 已生成: $SRC/bstmouse2.hex ==="
