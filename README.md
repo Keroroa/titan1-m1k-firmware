@@ -104,6 +104,52 @@ docs/       stock-firmware forensic reports (pins / SPI protocol / USB reports)
 tools/      RE tooling (avrdump.py disassembler, make_mod.py patcher) + DFU trigger
 ```
 
+## AI-generated disclosure
+
+> [!IMPORTANT]
+> **This project is substantially AI-generated.** The firmware, configurator,
+> reverse-engineering analysis and documentation in this repository were
+> produced by an AI coding agent (ZCode / GLM, trained by Z.ai) operating under
+> human direction, in a single working session. A human reviewed the results,
+> tested them on real hardware, and made the key decisions — but the code and
+> text were machine-written and **are provided without any warranty of
+> correctness, safety, or fitness for any purpose**.
+
+## ⚠️ Disclaimer — read before use, all risk on you
+
+**TL;DR: Use at your own absolute risk. If anything breaks, you keep both
+pieces.**
+
+1. **No warranty whatsoever.** The software is provided "AS IS", WITH ALL
+   FAULTS AND DEFECTS, without warranty of any kind — express, implied or
+   statutory — including but not limited to merchantability, fitness for a
+   particular purpose, accuracy, non-infringement, and uninterrupted or
+   error-free operation. To the maximum extent permitted by applicable law,
+   the authors and contributors **disclaim all liability** for any direct,
+   indirect, incidental, special, exemplary or consequential damages
+   (including loss of use, data, profits, or hardware) however caused and on
+   any theory of liability, even if advised of the possibility of such damage.
+2. **Flashing can brick your device.** You are overwriting the firmware of a
+   physical product with a microcontroller programmer. If power fails mid-
+   flash, if the build is misconfigured, if you flash the wrong file — the
+   mouse may become permanently unusable, and recovering it may require
+   disassembly, soldering, or an external programmer. **The bootloader is
+   protected by design but NO guarantee is given.**
+3. **AI-written code, human-supervised, hardware-validated on exactly one
+   unit.** The firmware was verified on a single hand-built mouse. It has not
+   been reviewed by a second engineer, fuzzed, formally verified, or tested
+   on other hardware revisions. Bugs — including bugs that misbehave at the
+   USB or sensor level — are entirely possible.
+4. **Not a consumer product.** This is an experimental RE/engineering project
+   published for educational and interoperability purposes. It is not
+   certified for any safety, EMC, or regulatory regime. Do not use it in any
+   context where malfunction could cause harm.
+5. **You are solely responsible** for compliance with local laws (including
+   copyright law regarding firmware dumps — this repository ships none), for
+   backing up anything you care about, and for every consequence of pressing
+   "flash". By using any part of this repository you accept these terms in
+   full.
+
 ## Credits & license
 
 - USB stack lineage: PJRC Teensy (MIT) → Furiosus/qsxcv →
@@ -115,8 +161,3 @@ tools/      RE tooling (avrdump.py disassembler, make_mod.py patcher) + DFU trig
   derivative disassemblies (copyright); the analysis in `docs/` is independent
   research, and the scripts in `tools/` expect you to supply your own dump
 
-## Disclaimer
-
-Use only on hardware you own. Flashing carries risk; make sure you understand
-the DFU process before proceeding. No liability for any damage arising from
-the use of this repository's contents.
